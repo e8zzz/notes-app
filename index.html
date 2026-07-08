@@ -4,7 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Notes</title>
+<meta name="theme-color" content="#808080">
 
+<link rel="manifest" href="manifest.json">
+
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Notes">
 <style>
 html, body {
     margin: 0;
@@ -32,7 +40,13 @@ textarea {
 
 <body>
 
-<textarea id="note" placeholder="Type here..."></textarea>
+<textarea
+    id="note"
+    spellcheck="false"
+    autocorrect="off"
+    autocomplete="off"
+    autocapitalize="off">
+</textarea>
 
 <script>
 const note = document.getElementById("note");
