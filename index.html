@@ -6,7 +6,7 @@
 
 <title>Notes</title>
 
-<meta name="theme-color" content="#808080">
+<meta name="theme-color" content="#707070">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 
@@ -15,33 +15,57 @@
 <meta name="apple-mobile-web-app-title" content="Notes">
 
 <style>
-html, body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    background: #808080;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+html, body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#707070;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",sans-serif;
 }
 
-textarea {
-    width: 100%;
-    height: 100%;
-    border: none;
-    outline: none;
-    resize: none;
-    background: transparent;
-    color: white;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-    font-size: 37px;
-    font-weight: 500;
-    line-height: 1.5;
-    padding: 28px;
-    box-sizing: border-box;
-    caret-color: white;
+body{
+    opacity:0;
+    transform:scale(1.02);
+    animation:open .35s ease forwards;
+}
+
+@keyframes open{
+    from{
+        opacity:0;
+        transform:scale(1.02);
+    }
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+textarea{
+    width:100%;
+    height:100%;
+    border:none;
+    outline:none;
+    resize:none;
+    overflow:auto;
+
+    background:transparent;
+    color:white;
+
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",sans-serif;
+    font-size:31px;
+    font-weight:400;
+    line-height:1.45;
+
+    padding:32px;
+    box-sizing:border-box;
+
+    caret-color:white;
+
+    -webkit-appearance:none;
+    appearance:none;
 }
 </style>
-
 </head>
 
 <body>
@@ -51,16 +75,21 @@ id="note"
 spellcheck="false"
 autocorrect="off"
 autocomplete="off"
-autocapitalize="off">
-</textarea>
+autocapitalize="off"></textarea>
 
 <script>
-const note = document.getElementById("note");
+const note=document.getElementById("note");
 
-note.value = localStorage.getItem("note") || "";
+note.value=localStorage.getItem("note")||"";
 
-note.addEventListener("input", () => {
-    localStorage.setItem("note", note.value);
+note.addEventListener("input",()=>{
+    localStorage.setItem("note",note.value);
+});
+
+window.addEventListener("load",()=>{
+    setTimeout(()=>{
+        note.focus();
+    },250);
 });
 </script>
 
