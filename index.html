@@ -3,95 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Notes</title>
-
-<meta name="theme-color" content="#707070">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Notes">
-
+<title>Checklist</title>
+<meta name="theme-color" content="#5f5f5f">
 <style>
-html, body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#707070;
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",sans-serif;
-}
-
-body{
-    opacity:0;
-    transform:scale(1.02);
-    animation:open .35s ease forwards;
-}
-
-@keyframes open{
-    from{
-        opacity:0;
-        transform:scale(1.02);
-    }
-    to{
-        opacity:1;
-        transform:scale(1);
-    }
-}
-
-textarea{
-    width:100%;
-    height:100%;
-    border:none;
-    outline:none;
-    resize:none;
-    overflow:auto;
-
-    background:transparent;
-    color:white;
-
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",sans-serif;
-    font-size:31px;
-    font-weight:400;
-    line-height:1.45;
-
-    padding:32px;
-    box-sizing:border-box;
-
-    caret-color:white;
-
-    -webkit-appearance:none;
-    appearance:none;
-}
+html,body{margin:0;height:100%;background:#666;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#fff}
+body{opacity:0;animation:fade .35s forwards}
+@keyframes fade{from{opacity:0;transform:scale(1.02)}to{opacity:1;transform:scale(1)}}
+#list{padding:28px}
+.item{display:flex;align-items:center;margin:14px 0}
+.check{width:26px;height:26px;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;margin-right:14px;font-size:18px;user-select:none}
+.text{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:28px;font-family:inherit}
+.done .check{background:#fff;color:#666}
+.done .text{opacity:.45;text-decoration:line-through}
 </style>
 </head>
-
 <body>
-
-<textarea
-id="note"
-spellcheck="false"
-autocorrect="off"
-autocomplete="off"
-autocapitalize="off"></textarea>
-
+<div id="list"></div>
 <script>
-const note=document.getElementById("note");
+const list=document.getElementById("list");
+let items=JSON.parse(localStorage.getItem("checklist")||'[{"text":"","done":false}]');
 
-note.value=localStorage.getItem("note")||"";
+function save(){localStorage.setItem("checklist",JSON.stringify(items));}
 
-note.addEventListener("input",()=>{
-    localStorage.setItem("note",note.value);
-});
-
-window.addEventListener("load",()=>{
-    setTimeout(()=>{
-        note.focus();
-    },250);
-});
+function render(){
+ list.innerHTML="";
+ items.forEach((it,i)=>{
+  const row=document.createElement("div");row.className="item"+(it.done?" done":"");
+  const c=document.createElement("div");c.className="check";c.textContent=it.done?"✓":"";
+  c.onclick=()=>{items[i].done=!items[i].done;save();render();}
+  const inp=document.createElement("input");inp.className="text";
+  inp.spellcheck=false;inp.autocorrect="off";inp.autocomplete="off";inp.autocapitalize="off";
+  inp.value=it.text;
+  inp.oninput=()=>{items[i].text=inp.value;save();}
+  inp.onkeydown=e=>{
+    if(e.key==="Enter"){
+      e.preventDefault();
+      items.splice(i+1,0,{text:"",done:false});
+      save();render();
+      setTimeout(()=>document.querySelectorAll(".text")[i+1].focus(),0);
+    }
+    if(e.key==="Backspace"&&inp.value===""&&items.length>1){
+      e.preventDefault();
+      items.splice(i,1);save();render();
+      setTimeout(()=>document.querySelectorAll(".text")[Math.max(0,i-1)].focus(),0);
+    }
+  };
+  row.append(c,inp);list.appendChild(row);
+ });
+}
+render();
 </script>
-
 </body>
 </html>
