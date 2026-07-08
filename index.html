@@ -3,16 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Notes</title>
+
 <meta name="theme-color" content="#808080">
-
 <link rel="manifest" href="manifest.json">
-
 <link rel="apple-touch-icon" href="icon-192.png">
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Notes">
+
 <style>
 html, body {
     margin: 0;
@@ -20,7 +21,7 @@ html, body {
     height: 100%;
     background: #808080;
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
 }
 
 textarea {
@@ -31,21 +32,26 @@ textarea {
     resize: none;
     background: transparent;
     color: white;
-    font-size: 20px;
-    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.5;
+    padding: 28px;
     box-sizing: border-box;
+    caret-color: white;
 }
 </style>
+
 </head>
 
 <body>
 
 <textarea
-    id="note"
-    spellcheck="false"
-    autocorrect="off"
-    autocomplete="off"
-    autocapitalize="off">
+id="note"
+spellcheck="false"
+autocorrect="off"
+autocomplete="off"
+autocapitalize="off">
 </textarea>
 
 <script>
