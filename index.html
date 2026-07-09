@@ -114,10 +114,201 @@ body{
     text-decoration-thickness:1.5px;
     text-decoration-color:rgba(255,255,255,0.7);
 }
+#calBtn{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background:#5a5a5a;
+    border:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(0,0,0,0.25);
+    -webkit-tap-highlight-color:transparent;
+    z-index:10;
+}
+#calBtn svg{
+    width:22px;
+    height:22px;
+}
+#overlay{
+    position:fixed;
+    inset:0;
+    background:#5a5a5a;
+    display:none;
+    flex-direction:column;
+    z-index:20;
+    box-sizing:border-box;
+    padding:28px 22px;
+    overflow-y:auto;
+}
+#overlay.open{
+    display:flex;
+}
+.ovHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:white;
+    margin-bottom:18px;
+}
+.ovHeader .navBtn{
+    background:none;
+    border:none;
+    color:white;
+    font-size:22px;
+    padding:6px 10px;
+    cursor:pointer;
+}
+.ovHeader .monthLabel{
+    font-size:20px;
+    font-weight:600;
+}
+#closeCal{
+    position:absolute;
+    top:28px;
+    right:22px;
+    background:none;
+    border:none;
+    color:white;
+    font-size:26px;
+    line-height:1;
+    cursor:pointer;
+}
+.weekRow{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    color:rgba(255,255,255,0.5);
+    font-size:13px;
+    text-align:center;
+    margin-bottom:6px;
+}
+.grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    row-gap:6px;
+}
+.dayCell{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    height:44px;
+    color:white;
+    font-size:15px;
+    border-radius:10px;
+    cursor:pointer;
+    position:relative;
+}
+.dayCell.empty{
+    cursor:default;
+}
+.dayCell.hasData{
+    font-weight:600;
+}
+.dayCell .dot{
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:white;
+    margin-top:3px;
+}
+.dayCell.today{
+    outline:1.5px solid rgba(255,255,255,0.6);
+}
+#dayView{
+    display:none;
+    flex-direction:column;
+}
+#dayView.open{
+    display:flex;
+}
+#dayView .dayTitle{
+    color:white;
+    font-size:20px;
+    font-weight:600;
+    margin-bottom:18px;
+}
+#dayView .backBtn{
+    background:none;
+    border:none;
+    color:white;
+    font-size:16px;
+    align-self:flex-start;
+    margin-bottom:14px;
+    cursor:pointer;
+    padding:4px 0;
+}
+.viewRow{
+    display:flex;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:10px;
+}
+.viewCircle{
+    flex:0 0 22px;
+    width:22px;
+    height:22px;
+    margin-top:8px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.viewCircle.done{
+    background:rgba(255,255,255,0.92);
+    border-color:rgba(255,255,255,0.92);
+}
+.viewCircle svg{
+    width:13px;
+    height:13px;
+}
+.viewText{
+    color:white;
+    font-size:19px;
+    line-height:1.4;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
+}
+.viewText.done{
+    opacity:0.55;
+    text-decoration:line-through;
+}
+.emptyMsg{
+    color:rgba(255,255,255,0.5);
+    font-size:16px;
+}
 </style>
 </head>
 <body>
 <div id="list"></div>
+<button id="calBtn" aria-label="Calendar">
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="16" rx="2" stroke="white" stroke-width="1.8"/><path d="M3 9.5H21" stroke="white" stroke-width="1.8"/><path d="M8 3V6.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M16 3V6.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+</button>
+<div id="overlay">
+    <button id="closeCal" aria-label="Close">&times;</button>
+    <div id="calView">
+        <div class="ovHeader">
+            <button class="navBtn" id="prevMonth">&#8249;</button>
+            <div class="monthLabel" id="monthLabel"></div>
+            <button class="navBtn" id="nextMonth">&#8250;</button>
+        </div>
+        <div class="weekRow">
+            <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+        </div>
+        <div class="grid" id="calGrid"></div>
+    </div>
+    <div id="dayView">
+        <button class="backBtn" id="backToCal">&#8249; Back</button>
+        <div class="dayTitle" id="dayTitle"></div>
+        <div id="dayItems"></div>
+    </div>
+</div>
 <script>
 const list=document.getElementById("list");
 const checkSVG='<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5L9.5 18L20 6" stroke="#707070" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -145,21 +336,48 @@ function playTick(){
     }catch(e){}
 }
 
+function todayKey(){
+    const d=new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+function loadAllDays(){
+    try{
+        const raw=JSON.parse(localStorage.getItem("notes-days"));
+        if(raw && typeof raw==="object") return raw;
+    }catch(e){}
+    return {};
+}
+
+function saveAllDays(days){
+    localStorage.setItem("notes-days", JSON.stringify(days));
+}
+
+const TODAY=todayKey();
+let allDays=loadAllDays();
+
+// migrate old single-note format if present
+if(!allDays[TODAY]){
+    try{
+        const legacy=JSON.parse(localStorage.getItem("note-items"));
+        if(Array.isArray(legacy) && legacy.length && legacy.some(it=>it.text && it.text.trim()!=="")){
+            allDays[TODAY]=legacy;
+            saveAllDays(allDays);
+        }
+    }catch(e){}
+}
+
 let items=[];
 let lastToggled=null;
-try{
-    const saved=JSON.parse(localStorage.getItem("note-items"));
-    if(Array.isArray(saved) && saved.length){
-        items=saved;
-    }else{
-        items=[{text:"",done:false}];
-    }
-}catch(e){
+if(Array.isArray(allDays[TODAY]) && allDays[TODAY].length){
+    items=allDays[TODAY];
+}else{
     items=[{text:"",done:false}];
 }
 
 function save(){
-    localStorage.setItem("note-items", JSON.stringify(items));
+    allDays[TODAY]=items;
+    saveAllDays(allDays);
 }
 
 function render(){
@@ -299,6 +517,111 @@ document.addEventListener("visibilitychange", ()=>{
     if(document.visibilityState==="hidden"){
         notifyUnchecked();
     }
+});
+
+// ---- Calendar ----
+const calBtn=document.getElementById("calBtn");
+const overlay=document.getElementById("overlay");
+const closeCal=document.getElementById("closeCal");
+const calView=document.getElementById("calView");
+const dayView=document.getElementById("dayView");
+const calGrid=document.getElementById("calGrid");
+const monthLabel=document.getElementById("monthLabel");
+const prevMonth=document.getElementById("prevMonth");
+const nextMonth=document.getElementById("nextMonth");
+const backToCal=document.getElementById("backToCal");
+const dayTitle=document.getElementById("dayTitle");
+const dayItems=document.getElementById("dayItems");
+
+const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+let calDate=new Date();
+
+function keyFor(y,m,d){
+    return y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+}
+
+function renderCalendar(){
+    const y=calDate.getFullYear();
+    const m=calDate.getMonth();
+    monthLabel.textContent=monthNames[m]+" "+y;
+    calGrid.innerHTML="";
+    const firstDow=new Date(y,m,1).getDay();
+    const daysInMonth=new Date(y,m+1,0).getDate();
+    for(let i=0;i<firstDow;i++){
+        const cell=document.createElement("div");
+        cell.className="dayCell empty";
+        calGrid.appendChild(cell);
+    }
+    for(let d=1;d<=daysInMonth;d++){
+        const key=keyFor(y,m,d);
+        const cell=document.createElement("div");
+        const hasData=Array.isArray(allDays[key]) && allDays[key].some(it=>it.text.trim()!=="");
+        cell.className="dayCell"+(hasData?" hasData":"")+(key===TODAY?" today":"");
+        const num=document.createElement("div");
+        num.textContent=d;
+        cell.appendChild(num);
+        if(hasData){
+            const dot=document.createElement("div");
+            dot.className="dot";
+            cell.appendChild(dot);
+        }
+        cell.addEventListener("click",()=>openDay(key,d));
+        calGrid.appendChild(cell);
+    }
+}
+
+function openDay(key,dayNum){
+    const list=allDays[key]||[];
+    dayTitle.textContent=monthNames[calDate.getMonth()]+" "+dayNum+", "+calDate.getFullYear();
+    dayItems.innerHTML="";
+    const real=list.filter(it=>it.text.trim()!=="");
+    if(real.length===0){
+        const msg=document.createElement("div");
+        msg.className="emptyMsg";
+        msg.textContent="Nothing written this day.";
+        dayItems.appendChild(msg);
+    }else{
+        real.forEach(it=>{
+            const row=document.createElement("div");
+            row.className="viewRow";
+            const c=document.createElement("div");
+            c.className="viewCircle"+(it.done?" done":"");
+            if(it.done){
+                c.innerHTML=checkSVG.replace('stroke="#707070"','stroke="#5a5a5a"');
+            }
+            const t=document.createElement("div");
+            t.className="viewText"+(it.done?" done":"");
+            t.textContent=it.text;
+            row.appendChild(c);
+            row.appendChild(t);
+            dayItems.appendChild(row);
+        });
+    }
+    calView.style.display="none";
+    dayView.classList.add("open");
+}
+
+calBtn.addEventListener("click",()=>{
+    calDate=new Date();
+    renderCalendar();
+    calView.style.display="block";
+    dayView.classList.remove("open");
+    overlay.classList.add("open");
+});
+closeCal.addEventListener("click",()=>{
+    overlay.classList.remove("open");
+});
+prevMonth.addEventListener("click",()=>{
+    calDate.setMonth(calDate.getMonth()-1);
+    renderCalendar();
+});
+nextMonth.addEventListener("click",()=>{
+    calDate.setMonth(calDate.getMonth()+1);
+    renderCalendar();
+});
+backToCal.addEventListener("click",()=>{
+    dayView.classList.remove("open");
+    calView.style.display="block";
 });
 </script>
 </body>
