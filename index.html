@@ -623,6 +623,28 @@ backToCal.addEventListener("click",()=>{
     dayView.classList.remove("open");
     calView.style.display="block";
 });
+
+let touchStartX=null;
+let touchStartY=null;
+calView.addEventListener("touchstart",(e)=>{
+    touchStartX=e.touches[0].clientX;
+    touchStartY=e.touches[0].clientY;
+},{passive:true});
+calView.addEventListener("touchend",(e)=>{
+    if(touchStartX===null) return;
+    const dx=e.changedTouches[0].clientX-touchStartX;
+    const dy=e.changedTouches[0].clientY-touchStartY;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)){
+        if(dx<0){
+            calDate.setMonth(calDate.getMonth()+1);
+        }else{
+            calDate.setMonth(calDate.getMonth()-1);
+        }
+        renderCalendar();
+    }
+    touchStartX=null;
+    touchStartY=null;
+},{passive:true});
 </script>
 </body>
 </html>
