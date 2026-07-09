@@ -25,8 +25,7 @@ html, body{
 }
 body{
     opacity:0;
-    transform:scale(1.02);
-    animation:open .35s ease forwards;
+    animation:open .3s ease forwards;
 }
 body.calOpen{
     background:#707070;
@@ -34,11 +33,9 @@ body.calOpen{
 @keyframes open{
     from{
         opacity:0;
-        transform:scale(1.02);
     }
     to{
         opacity:1;
-        transform:scale(1);
     }
 }
 #list{
@@ -167,6 +164,7 @@ body.calOpen{
     font-size:22px;
     padding:6px 10px;
     cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
 }
 .ovHeader .monthLabel{
     font-size:20px;
@@ -183,6 +181,7 @@ body.calOpen{
     line-height:1;
     cursor:pointer;
     z-index:1;
+    -webkit-tap-highlight-color:transparent;
 }
 .weekRow{
     display:grid;
@@ -208,6 +207,7 @@ body.calOpen{
     border-radius:10px;
     cursor:pointer;
     position:relative;
+    -webkit-tap-highlight-color:transparent;
 }
 .dayCell.empty{
     cursor:default;
@@ -247,6 +247,7 @@ body.calOpen{
     margin-bottom:14px;
     cursor:pointer;
     padding:4px 0;
+    -webkit-tap-highlight-color:transparent;
 }
 .viewRow{
     display:flex;
