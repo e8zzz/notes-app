@@ -23,12 +23,14 @@ html, body{
     touch-action:manipulation;
     font-family:"Space Grotesk",ui-rounded,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
 }
-body{
-    opacity:0;
-    animation:open .3s ease forwards;
-}
 body.calOpen{
     background:#707070;
+}
+#app{
+    width:100%;
+    height:100%;
+    opacity:0;
+    animation:open .3s ease forwards;
 }
 @keyframes open{
     from{
@@ -289,9 +291,19 @@ body.calOpen{
     color:rgba(255,255,255,0.5);
     font-size:16px;
 }
+button{
+    -webkit-appearance:none;
+    appearance:none;
+    -webkit-tap-highlight-color:transparent;
+    outline:none;
+}
+button:active{
+    background-color:inherit;
+}
 </style>
 </head>
 <body>
+<div id="app">
 <div id="list"></div>
 <button id="calBtn" aria-label="Calendar">
 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="16" rx="2" stroke="white" stroke-width="1.8"/><path d="M3 9.5H21" stroke="white" stroke-width="1.8"/><path d="M8 3V6.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M16 3V6.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -314,6 +326,7 @@ body.calOpen{
         <div class="dayTitle" id="dayTitle"></div>
         <div id="dayItems"></div>
     </div>
+</div>
 </div>
 <script>
 const list=document.getElementById("list");
