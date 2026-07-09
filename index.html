@@ -3,17 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Notes</title>
-
 <meta name="theme-color" content="#707070">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Notes">
-
 <style>
 html, body{
     margin:0;
@@ -23,13 +19,11 @@ html, body{
     background:#707070;
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",sans-serif;
 }
-
 body{
     opacity:0;
     transform:scale(1.02);
     animation:open .35s ease forwards;
 }
-
 @keyframes open{
     from{
         opacity:0;
@@ -40,58 +34,194 @@ body{
         transform:scale(1);
     }
 }
-
-textarea{
+#list{
     width:100%;
     height:100%;
-    border:none;
-    outline:none;
-    resize:none;
-    overflow:auto;
-
+    overflow-y:auto;
+    overflow-x:hidden;
+    box-sizing:border-box;
+    padding:32px 26px;
+}
+.row{
+    display:flex;
+    align-items:flex-start;
+    width:100%;
+    box-sizing:border-box;
+    gap:16px;
+    margin-bottom:2px;
+}
+.circle{
+    flex:0 0 24px;
+    width:24px;
+    height:24px;
+    margin-top:9px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.45);
     background:transparent;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .15s ease, border-color .15s ease;
+}
+.circle svg{
+    width:14px;
+    height:14px;
+    opacity:0;
+    transform:scale(.6);
+    transition:opacity .15s ease, transform .15s ease;
+}
+.circle.done{
+    background:rgba(255,255,255,0.92);
+    border-color:rgba(255,255,255,0.92);
+}
+.circle.done svg{
+    opacity:1;
+    transform:scale(1);
+}
+.text{
+    flex:1 1 auto;
+    min-width:0;
     color:white;
-
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",sans-serif;
-    font-size:31px;
+    font-size:28px;
     font-weight:400;
     line-height:1.45;
-
-    padding:32px;
-    box-sizing:border-box;
-
-    caret-color:white;
-
+    outline:none;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
     -webkit-appearance:none;
     appearance:none;
 }
+.text.done{
+    opacity:0.55;
+    text-decoration:line-through;
+    text-decoration-thickness:1.5px;
+    text-decoration-color:rgba(255,255,255,0.7);
+}
 </style>
 </head>
-
 <body>
-
-<textarea
-id="note"
-spellcheck="false"
-autocorrect="off"
-autocomplete="off"
-autocapitalize="off"></textarea>
-
+<div id="list"></div>
 <script>
-const note=document.getElementById("note");
+const list=document.getElementById("list");
+const checkSVG='<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5L9.5 18L20 6" stroke="#707070" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-note.value=localStorage.getItem("note")||"";
+let items=[];
+try{
+    const saved=JSON.parse(localStorage.getItem("note-items"));
+    if(Array.isArray(saved) && saved.length){
+        items=saved;
+    }else{
+        items=[{text:"",done:false}];
+    }
+}catch(e){
+    items=[{text:"",done:false}];
+}
 
-note.addEventListener("input",()=>{
-    localStorage.setItem("note",note.value);
-});
+function save(){
+    localStorage.setItem("note-items", JSON.stringify(items));
+}
+
+function render(){
+    list.innerHTML="";
+    items.forEach((item,i)=>{
+        const row=document.createElement("div");
+        row.className="row";
+
+        const circle=document.createElement("button");
+        circle.type="button";
+        circle.className="circle"+(item.done?" done":"");
+        circle.innerHTML=checkSVG;
+        circle.addEventListener("click",()=>toggle(i));
+
+        const text=document.createElement("div");
+        text.className="text"+(item.done?" done":"");
+        text.contentEditable="true";
+        text.setAttribute("data-index",i);
+        text.textContent=item.text;
+        text.addEventListener("input",()=>{
+            items[i].text=text.textContent;
+            save();
+        });
+        text.addEventListener("keydown",(e)=>handleKey(e,i));
+
+        row.appendChild(circle);
+        row.appendChild(text);
+        list.appendChild(row);
+    });
+}
+
+function toggle(i){
+    items[i].done=!items[i].done;
+    save();
+    render();
+}
+
+function caretOffset(el){
+    const sel=window.getSelection();
+    if(!sel.rangeCount) return 0;
+    const range=sel.getRangeAt(0);
+    const pre=range.cloneRange();
+    pre.selectNodeContents(el);
+    pre.setEnd(range.endContainer, range.endOffset);
+    return pre.toString().length;
+}
+
+function focusRow(index, offset){
+    const el=list.querySelector('.text[data-index="'+index+'"]');
+    if(!el) return;
+    el.focus();
+    const range=document.createRange();
+    const sel=window.getSelection();
+    if(el.firstChild){
+        const len=Math.min(offset, el.firstChild.length);
+        range.setStart(el.firstChild, len);
+    }else{
+        range.setStart(el,0);
+    }
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+function handleKey(e,i){
+    if(e.key==="Enter"){
+        e.preventDefault();
+        const el=e.target;
+        const offset=caretOffset(el);
+        const full=el.textContent;
+        const before=full.slice(0,offset);
+        const after=full.slice(offset);
+        items[i].text=before;
+        items.splice(i+1,0,{text:after,done:false});
+        save();
+        render();
+        focusRow(i+1,0);
+    }else if(e.key==="Backspace"){
+        const el=e.target;
+        const offset=caretOffset(el);
+        if(offset===0 && i>0){
+            e.preventDefault();
+            const prevLen=items[i-1].text.length;
+            items[i-1].text+=items[i].text;
+            items.splice(i,1);
+            save();
+            render();
+            focusRow(i-1,prevLen);
+        }
+    }
+}
+
+render();
 
 window.addEventListener("load",()=>{
     setTimeout(()=>{
-        note.focus();
+        focusRow(items.length-1, items[items.length-1].text.length);
     },250);
 });
 </script>
-
 </body>
 </html>
