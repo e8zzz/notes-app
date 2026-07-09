@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Notes</title>
 <meta name="theme-color" content="#707070">
 <link rel="manifest" href="manifest.json">
@@ -27,6 +27,9 @@ body{
     opacity:0;
     transform:scale(1.02);
     animation:open .35s ease forwards;
+}
+body.calOpen{
+    background:#5a5a5a;
 }
 @keyframes open{
     from{
@@ -143,7 +146,7 @@ body{
     flex-direction:column;
     z-index:20;
     box-sizing:border-box;
-    padding:28px 22px;
+    padding:calc(28px + env(safe-area-inset-top)) 22px 28px 22px;
     overflow-y:auto;
 }
 #overlay.open{
@@ -155,6 +158,7 @@ body{
     justify-content:space-between;
     color:white;
     margin-bottom:18px;
+    padding-right:38px;
 }
 .ovHeader .navBtn{
     background:none;
@@ -170,7 +174,7 @@ body{
 }
 #closeCal{
     position:absolute;
-    top:28px;
+    top:calc(28px + env(safe-area-inset-top));
     right:22px;
     background:none;
     border:none;
@@ -178,6 +182,7 @@ body{
     font-size:26px;
     line-height:1;
     cursor:pointer;
+    z-index:1;
 }
 .weekRow{
     display:grid;
@@ -607,9 +612,11 @@ calBtn.addEventListener("click",()=>{
     calView.style.display="block";
     dayView.classList.remove("open");
     overlay.classList.add("open");
+    document.body.classList.add("calOpen");
 });
 closeCal.addEventListener("click",()=>{
     overlay.classList.remove("open");
+    document.body.classList.remove("calOpen");
 });
 prevMonth.addEventListener("click",()=>{
     calDate.setMonth(calDate.getMonth()-1);
