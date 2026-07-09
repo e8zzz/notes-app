@@ -77,6 +77,14 @@ body{
     background:rgba(255,255,255,0.92);
     border-color:rgba(255,255,255,0.92);
 }
+.circle.pop{
+    animation:pop .28s ease;
+}
+@keyframes pop{
+    0%{transform:scale(1);}
+    35%{transform:scale(1.25);}
+    100%{transform:scale(1);}
+}
 .circle.done svg{
     opacity:1;
     transform:scale(1);
@@ -110,7 +118,31 @@ body{
 const list=document.getElementById("list");
 const checkSVG='<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5L9.5 18L20 6" stroke="#707070" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+let audioCtx=null;
+function playTick(){
+    try{
+        if(!audioCtx){
+            audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+        }
+        if(audioCtx.state==="suspended"){
+            audioCtx.resume();
+        }
+        const osc=audioCtx.createOscillator();
+        const gain=audioCtx.createGain();
+        osc.type="sine";
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(660, audioCtx.currentTime+0.08);
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime+0.13);
+    }catch(e){}
+}
+
 let items=[];
+let lastToggled=null;
 try{
     const saved=JSON.parse(localStorage.getItem("note-items"));
     if(Array.isArray(saved) && saved.length){
@@ -136,7 +168,18 @@ function render(){
         circle.type="button";
         circle.className="circle"+(item.done?" done":"");
         circle.innerHTML=checkSVG;
-        circle.addEventListener("click",()=>toggle(i));
+        if(i===lastToggled){
+            circle.classList.add("pop");
+            circle.addEventListener("animationend",()=>circle.classList.remove("pop"));
+        }
+        circle.addEventListener("click",()=>{
+            if(navigator.vibrate){
+                navigator.vibrate(15);
+            }
+            playTick();
+            lastToggled=i;
+            toggle(i);
+        });
 
         const text=document.createElement("div");
         text.className="text"+(item.done?" done":"");
