@@ -255,24 +255,44 @@ body.calOpen{
     margin-top:8px;
     border-radius:50%;
     border:2px solid rgba(255,255,255,0.45);
+    background:transparent;
+    padding:0;
     display:flex;
     align-items:center;
     justify-content:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .15s ease, border-color .15s ease;
 }
 .viewCircle.done{
     background:rgba(255,255,255,0.92);
     border-color:rgba(255,255,255,0.92);
 }
+.viewCircle.pop{
+    animation:pop .28s ease;
+}
 .viewCircle svg{
     width:13px;
     height:13px;
+    opacity:0;
+    transform:scale(.6);
+    transition:opacity .15s ease, transform .15s ease;
+}
+.viewCircle.done svg{
+    opacity:1;
+    transform:scale(1);
 }
 .viewText{
     color:white;
     font-size:19px;
     line-height:1.4;
+    outline:none;
+    white-space:pre-wrap;
     word-wrap:break-word;
     overflow-wrap:break-word;
+    caret-color:white;
+    flex:1 1 auto;
+    min-width:0;
 }
 .viewText.done{
     opacity:0.55;
@@ -580,35 +600,123 @@ function renderCalendar(){
     }
 }
 
-function openDay(key,dayNum){
-    const list=allDays[key]||[];
-    dayTitle.textContent=monthNames[calDate.getMonth()]+" "+dayNum+", "+calDate.getFullYear();
-    dayItems.innerHTML="";
-    const real=list.filter(it=>it.text.trim()!=="");
-    if(real.length===0){
-        const msg=document.createElement("div");
-        msg.className="emptyMsg";
-        msg.textContent="Nothing written this day.";
-        dayItems.appendChild(msg);
-    }else{
-        real.forEach(it=>{
-            const row=document.createElement("div");
-            row.className="viewRow";
-            const c=document.createElement("div");
-            c.className="viewCircle"+(it.done?" done":"");
-            if(it.done){
-                c.innerHTML=checkSVG;
-            }
-            const t=document.createElement("div");
-            t.className="viewText"+(it.done?" done":"");
-            t.textContent=it.text;
-            row.appendChild(c);
-            row.appendChild(t);
-            dayItems.appendChild(row);
-        });
+let currentDayKey=null;
+let dayLastToggled=null;
+
+function ensureDay(key){
+    if(!Array.isArray(allDays[key]) || allDays[key].length===0){
+        allDays[key]=[{text:"",done:false}];
     }
+    return allDays[key];
+}
+
+function dayCaretOffset(el){
+    return caretOffset(el);
+}
+
+function dayFocusRow(index,offset){
+    const el=dayItems.querySelector('.viewText[data-index="'+index+'"]');
+    if(!el) return;
+    el.focus();
+    const range=document.createRange();
+    const sel=window.getSelection();
+    if(el.firstChild){
+        const len=Math.min(offset, el.firstChild.length);
+        range.setStart(el.firstChild, len);
+    }else{
+        range.setStart(el,0);
+    }
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+function renderDayList(key){
+    const arr=ensureDay(key);
+    dayItems.innerHTML="";
+    arr.forEach((item,i)=>{
+        const row=document.createElement("div");
+        row.className="viewRow";
+
+        const circle=document.createElement("button");
+        circle.type="button";
+        circle.className="viewCircle"+(item.done?" done":"");
+        circle.innerHTML=checkSVG;
+        if(i===dayLastToggled){
+            circle.classList.add("pop");
+            circle.addEventListener("animationend",()=>circle.classList.remove("pop"));
+        }
+        circle.addEventListener("click",()=>{
+            if(navigator.vibrate) navigator.vibrate(15);
+            playTick();
+            dayLastToggled=i;
+            allDays[key][i].done=!allDays[key][i].done;
+            saveAllDays(allDays);
+            if(key===TODAY){ items=allDays[TODAY]; }
+            renderDayList(key);
+        });
+
+        const text=document.createElement("div");
+        text.className="viewText"+(item.done?" done":"");
+        text.contentEditable="true";
+        text.setAttribute("data-index",i);
+        text.setAttribute("spellcheck","false");
+        text.setAttribute("autocorrect","off");
+        text.setAttribute("autocapitalize","off");
+        text.setAttribute("autocomplete","off");
+        text.textContent=item.text;
+        text.addEventListener("input",()=>{
+            allDays[key][i].text=text.textContent;
+            saveAllDays(allDays);
+            if(key===TODAY){ items=allDays[TODAY]; }
+        });
+        text.addEventListener("keydown",(e)=>{
+            const arr2=allDays[key];
+            if(e.key==="Enter"){
+                e.preventDefault();
+                const el=e.target;
+                const offset=dayCaretOffset(el);
+                const full=el.textContent;
+                const before=full.slice(0,offset);
+                const after=full.slice(offset);
+                arr2[i].text=before;
+                arr2.splice(i+1,0,{text:after,done:false});
+                saveAllDays(allDays);
+                if(key===TODAY){ items=allDays[TODAY]; }
+                renderDayList(key);
+                dayFocusRow(i+1,0);
+            }else if(e.key==="Backspace"){
+                const el=e.target;
+                const offset=dayCaretOffset(el);
+                if(offset===0 && i>0){
+                    e.preventDefault();
+                    const prevLen=arr2[i-1].text.length;
+                    arr2[i-1].text+=arr2[i].text;
+                    arr2.splice(i,1);
+                    saveAllDays(allDays);
+                    if(key===TODAY){ items=allDays[TODAY]; }
+                    renderDayList(key);
+                    dayFocusRow(i-1,prevLen);
+                }
+            }
+        });
+
+        row.appendChild(circle);
+        row.appendChild(text);
+        dayItems.appendChild(row);
+    });
+}
+
+function openDay(key,dayNum){
+    currentDayKey=key;
+    dayTitle.textContent=monthNames[calDate.getMonth()]+" "+dayNum+", "+calDate.getFullYear();
+    renderDayList(key);
     calView.style.display="none";
     dayView.classList.add("open");
+    setTimeout(()=>{
+        const arr=allDays[key]||[];
+        dayFocusRow(arr.length-1, (arr[arr.length-1]||{text:""}).text.length);
+    },50);
 }
 
 calBtn.addEventListener("click",()=>{
@@ -622,6 +730,7 @@ calBtn.addEventListener("click",()=>{
 closeCal.addEventListener("click",()=>{
     overlay.classList.remove("open");
     document.body.classList.remove("calOpen");
+    render();
 });
 prevMonth.addEventListener("click",()=>{
     calDate.setMonth(calDate.getMonth()-1);
@@ -634,6 +743,7 @@ nextMonth.addEventListener("click",()=>{
 backToCal.addEventListener("click",()=>{
     dayView.classList.remove("open");
     calView.style.display="block";
+    renderCalendar();
 });
 
 let touchStartX=null;
