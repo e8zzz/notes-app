@@ -142,6 +142,10 @@ function render(){
         text.className="text"+(item.done?" done":"");
         text.contentEditable="true";
         text.setAttribute("data-index",i);
+        text.setAttribute("spellcheck","false");
+        text.setAttribute("autocorrect","off");
+        text.setAttribute("autocapitalize","off");
+        text.setAttribute("autocomplete","off");
         text.textContent=item.text;
         text.addEventListener("input",()=>{
             items[i].text=text.textContent;
