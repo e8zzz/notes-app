@@ -29,7 +29,7 @@ body{
     animation:open .35s ease forwards;
 }
 body.calOpen{
-    background:#5a5a5a;
+    background:#707070;
 }
 @keyframes open{
     from{
@@ -124,7 +124,7 @@ body.calOpen{
     width:46px;
     height:46px;
     border-radius:50%;
-    background:#5a5a5a;
+    background:#707070;
     border:none;
     display:flex;
     align-items:center;
@@ -141,7 +141,7 @@ body.calOpen{
 #overlay{
     position:fixed;
     inset:0;
-    background:#5a5a5a;
+    background:#707070;
     display:none;
     flex-direction:column;
     z-index:20;
@@ -592,7 +592,7 @@ function openDay(key,dayNum){
             const c=document.createElement("div");
             c.className="viewCircle"+(it.done?" done":"");
             if(it.done){
-                c.innerHTML=checkSVG.replace('stroke="#707070"','stroke="#5a5a5a"');
+                c.innerHTML=checkSVG;
             }
             const t=document.createElement("div");
             t.className="viewText"+(it.done?" done":"");
