@@ -10,6 +10,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Notes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 html, body{
     margin:0;
@@ -18,7 +21,7 @@ html, body{
     overflow:hidden;
     background:#707070;
     touch-action:manipulation;
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",sans-serif;
+    font-family:"Space Grotesk",ui-rounded,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
 }
 body{
     opacity:0;
@@ -270,6 +273,32 @@ window.addEventListener("load",()=>{
     setTimeout(()=>{
         focusRow(items.length-1, items[items.length-1].text.length);
     },250);
+});
+
+function requestNotifyPermission(){
+    if("Notification" in window && Notification.permission==="default"){
+        Notification.requestPermission();
+    }
+}
+document.addEventListener("pointerdown", requestNotifyPermission, {once:true});
+
+function notifyUnchecked(){
+    if(!("Notification" in window)) return;
+    if(Notification.permission!=="granted") return;
+    const remaining=items.filter(it=>!it.done && it.text.trim()!=="").length;
+    if(remaining>0){
+        try{
+            new Notification("Notes", {
+                body: remaining===1 ? "1 task left" : remaining+" tasks left",
+                icon: "icon-192.png"
+            });
+        }catch(e){}
+    }
+}
+document.addEventListener("visibilitychange", ()=>{
+    if(document.visibilityState==="hidden"){
+        notifyUnchecked();
+    }
 });
 </script>
 </body>
