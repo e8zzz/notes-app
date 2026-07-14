@@ -47,7 +47,7 @@ body.calOpen{
     flex:0 0 24px;
     width:24px;
     height:24px;
-    margin-top:9px;
+    margin-top:10px;
     border-radius:50%;
     border:2px solid rgba(255,255,255,0.45);
     background:transparent;
@@ -86,7 +86,7 @@ body.calOpen{
     flex:1 1 auto;
     min-width:0;
     color:white;
-    font-size:28px;
+    font-size:30px;
     font-weight:400;
     line-height:1.45;
     outline:none;
@@ -249,7 +249,7 @@ body.calOpen{
     flex:0 0 22px;
     width:22px;
     height:22px;
-    margin-top:8px;
+    margin-top:11px;
     border-radius:50%;
     border:2px solid rgba(255,255,255,0.45);
     background:transparent;
@@ -281,7 +281,7 @@ body.calOpen{
 }
 .viewText{
     color:white;
-    font-size:19px;
+    font-size:21px;
     line-height:1.4;
     outline:none;
     white-space:pre-wrap;
@@ -298,6 +298,22 @@ body.calOpen{
 .emptyMsg{
     color:rgba(255,255,255,0.5);
     font-size:16px;
+}
+.dayEmptyState{
+    color:rgba(255,255,255,0.4);
+    font-size:17px;
+    padding:60px 4px;
+    text-align:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    animation:fadeIn .25s ease;
+}
+.fadeIn{
+    animation:fadeIn .22s ease;
+}
+@keyframes fadeIn{
+    from{ opacity:0; transform:translateY(4px); }
+    to{ opacity:1; transform:translateY(0); }
 }
 button{
     -webkit-appearance:none;
@@ -599,6 +615,7 @@ function renderCalendar(){
 
 let currentDayKey=null;
 let dayLastToggled=null;
+const startedDays=new Set();
 
 function ensureDay(key){
     if(!Array.isArray(allDays[key]) || allDays[key].length===0){
@@ -628,12 +645,31 @@ function dayFocusRow(index,offset){
     sel.addRange(range);
 }
 
-function renderDayList(key){
+function renderDayEmptyState(key){
+    dayItems.innerHTML="";
+    const empty=document.createElement("div");
+    empty.className="dayEmptyState";
+    empty.textContent="Nothing written here yet";
+    empty.addEventListener("click",()=>{
+        startedDays.add(key);
+        renderDayList(key, true);
+        dayFocusRow(0,0);
+    });
+    dayItems.appendChild(empty);
+}
+
+function renderDayList(key, animate){
+    const raw=allDays[key];
+    const hasContent=Array.isArray(raw) && raw.some(l=>l.text.trim()!=="");
+    if(!hasContent && !startedDays.has(key)){
+        renderDayEmptyState(key);
+        return;
+    }
     const arr=ensureDay(key);
     dayItems.innerHTML="";
     arr.forEach((item,i)=>{
         const row=document.createElement("div");
-        row.className="viewRow";
+        row.className="viewRow"+(animate?" fadeIn":"");
 
         const circle=document.createElement("button");
         circle.type="button";
@@ -707,13 +743,17 @@ function renderDayList(key){
 function openDay(key,dayNum){
     currentDayKey=key;
     dayTitle.textContent=monthNames[calDate.getMonth()]+" "+dayNum+", "+calDate.getFullYear();
+    const raw=allDays[key];
+    const hasContent=Array.isArray(raw) && raw.some(l=>l.text.trim()!=="");
     renderDayList(key);
     calView.style.display="none";
     dayView.classList.add("open");
-    setTimeout(()=>{
-        const arr=allDays[key]||[];
-        dayFocusRow(arr.length-1, (arr[arr.length-1]||{text:""}).text.length);
-    },50);
+    if(hasContent || startedDays.has(key)){
+        setTimeout(()=>{
+            const arr=allDays[key]||[];
+            dayFocusRow(arr.length-1, (arr[arr.length-1]||{text:""}).text.length);
+        },50);
+    }
 }
 
 calBtn.addEventListener("click",()=>{
