@@ -10,9 +10,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Notes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 html, body{
     margin:0;
@@ -21,7 +18,7 @@ html, body{
     overflow:hidden;
     background:#707070;
     touch-action:manipulation;
-    font-family:"Space Grotesk",ui-rounded,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+    font-family:ui-rounded,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
 }
 body.calOpen{
     background:#707070;
@@ -767,6 +764,12 @@ calView.addEventListener("touchend",(e)=>{
     touchStartX=null;
     touchStartY=null;
 },{passive:true});
+
+if("serviceWorker" in navigator){
+    window.addEventListener("load",()=>{
+        navigator.serviceWorker.register("sw.js").catch(()=>{});
+    });
+}
 </script>
 </body>
 </html>
