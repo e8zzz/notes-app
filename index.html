@@ -396,6 +396,13 @@ function saveAllDays(days){
     localStorage.setItem("notes-days", JSON.stringify(days));
 }
 
+const DEFAULT_TASKS=[
+    "ركعتين قيام الليل قبل الفجر",
+    "صلاة الفجر",
+    "قراءة صفحة قرآن",
+    "حفظ آية قرآن"
+];
+
 const TODAY=todayKey();
 let allDays=loadAllDays();
 
@@ -415,7 +422,9 @@ let lastToggled=null;
 if(Array.isArray(allDays[TODAY]) && allDays[TODAY].length){
     items=allDays[TODAY];
 }else{
-    items=[{text:"",done:false}];
+    items=DEFAULT_TASKS.map(t=>({text:t,done:false}));
+    allDays[TODAY]=items;
+    saveAllDays(allDays);
 }
 
 function save(){
@@ -618,7 +627,10 @@ let dayLastToggled=null;
 const startedDays=new Set();
 
 function ensureDay(key){
-    if(!Array.isArray(allDays[key]) || allDays[key].length===0){
+    if(!Array.isArray(allDays[key])){
+        allDays[key]=DEFAULT_TASKS.map(t=>({text:t,done:false}));
+        saveAllDays(allDays);
+    }else if(allDays[key].length===0){
         allDays[key]=[{text:"",done:false}];
     }
     return allDays[key];
@@ -659,13 +671,14 @@ function renderDayEmptyState(key){
 }
 
 function renderDayList(key, animate){
+    ensureDay(key);
     const raw=allDays[key];
-    const hasContent=Array.isArray(raw) && raw.some(l=>l.text.trim()!=="");
+    const hasContent=raw.some(l=>l.text.trim()!=="");
     if(!hasContent && !startedDays.has(key)){
         renderDayEmptyState(key);
         return;
     }
-    const arr=ensureDay(key);
+    const arr=raw;
     dayItems.innerHTML="";
     arr.forEach((item,i)=>{
         const row=document.createElement("div");
@@ -743,8 +756,9 @@ function renderDayList(key, animate){
 function openDay(key,dayNum){
     currentDayKey=key;
     dayTitle.textContent=monthNames[calDate.getMonth()]+" "+dayNum+", "+calDate.getFullYear();
+    ensureDay(key);
     const raw=allDays[key];
-    const hasContent=Array.isArray(raw) && raw.some(l=>l.text.trim()!=="");
+    const hasContent=raw.some(l=>l.text.trim()!=="");
     renderDayList(key);
     calView.style.display="none";
     dayView.classList.add("open");
