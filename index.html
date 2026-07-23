@@ -622,6 +622,7 @@ function render(){
         list.appendChild(row);
     });
     renderDailyToggle(list, TODAY, render);
+    lastToggled=null;
 }
 
 function toggle(i){
@@ -898,6 +899,7 @@ function renderDayList(key, animate){
         dayItems.appendChild(row);
     });
     renderDailyToggle(dayItems, key, ()=>renderDayList(key));
+    dayLastToggled=null;
 }
 
 function openDay(key,dayNum){
