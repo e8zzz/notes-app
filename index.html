@@ -299,6 +299,52 @@ body.calOpen{
     color:rgba(255,255,255,0.5);
     font-size:16px;
 }
+.dailyToggle{
+    margin-top:22px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.07);
+    overflow:hidden;
+}
+.dailyToggleHeader{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 16px;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+}
+.dailyToggleLabel{
+    color:white;
+    font-size:16px;
+    font-weight:600;
+    flex:1 1 auto;
+}
+.dailyToggleCount{
+    color:rgba(255,255,255,0.55);
+    font-size:13px;
+    flex:0 0 auto;
+}
+.dailyToggleArrow{
+    width:18px;
+    height:18px;
+    color:white;
+    flex:0 0 18px;
+    transition:transform .25s ease;
+}
+.dailyToggle.expanded .dailyToggleArrow{
+    transform:rotate(90deg);
+}
+.dailyToggleBody{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .3s ease;
+}
+.dailyToggleInner{
+    padding:2px 16px 16px 16px;
+}
+.dailyToggleInner .viewRow{
+    margin-bottom:10px;
+}
 .dayEmptyState{
     color:rgba(255,255,255,0.4);
     font-size:17px;
@@ -422,9 +468,110 @@ let lastToggled=null;
 if(Array.isArray(allDays[TODAY]) && allDays[TODAY].length){
     items=allDays[TODAY];
 }else{
-    items=DEFAULT_TASKS.map(t=>({text:t,done:false}));
-    allDays[TODAY]=items;
-    saveAllDays(allDays);
+    items=[{text:"",done:false}];
+}
+
+// ---- Daily recurring tasks toggle ----
+const arrowSVG='<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5L16 12L9 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function loadDailyTasksAll(){
+    try{
+        const raw=JSON.parse(localStorage.getItem("notes-dailytasks"));
+        if(raw && typeof raw==="object") return raw;
+    }catch(e){}
+    return {};
+}
+function saveDailyTasksAll(){
+    localStorage.setItem("notes-dailytasks", JSON.stringify(dailyTasksAll));
+}
+let dailyTasksAll=loadDailyTasksAll();
+let dailyToggleExpanded={};
+
+function getDailyTaskState(key){
+    if(!Array.isArray(dailyTasksAll[key]) || dailyTasksAll[key].length!==DEFAULT_TASKS.length){
+        dailyTasksAll[key]=DEFAULT_TASKS.map(()=>false);
+        saveDailyTasksAll();
+    }
+    return dailyTasksAll[key];
+}
+
+function renderDailyToggle(container, key, onChange){
+    const state=getDailyTaskState(key);
+    const wrap=document.createElement("div");
+    wrap.className="dailyToggle"+(dailyToggleExpanded[key]?" expanded":"");
+
+    const header=document.createElement("div");
+    header.className="dailyToggleHeader";
+    const doneCount=state.filter(Boolean).length;
+    const label=document.createElement("div");
+    label.className="dailyToggleLabel";
+    label.textContent="Daily Tasks";
+    const count=document.createElement("div");
+    count.className="dailyToggleCount";
+    count.textContent=doneCount+"/"+state.length;
+    const arrow=document.createElement("div");
+    arrow.className="dailyToggleArrow";
+    arrow.innerHTML=arrowSVG;
+    header.appendChild(label);
+    header.appendChild(count);
+    header.appendChild(arrow);
+
+    const body=document.createElement("div");
+    body.className="dailyToggleBody";
+    const inner=document.createElement("div");
+    inner.className="dailyToggleInner";
+
+    DEFAULT_TASKS.forEach((taskText,i)=>{
+        const row=document.createElement("div");
+        row.className="viewRow";
+        const circle=document.createElement("button");
+        circle.type="button";
+        circle.className="viewCircle"+(state[i]?" done":"");
+        circle.innerHTML=checkSVG;
+        circle.addEventListener("click",()=>{
+            if(navigator.vibrate) navigator.vibrate(15);
+            playTick();
+            state[i]=!state[i];
+            saveDailyTasksAll();
+            dailyToggleExpanded[key]=true;
+            onChange();
+        });
+        const text=document.createElement("div");
+        text.className="viewText"+(state[i]?" done":"");
+        text.textContent=taskText;
+        row.appendChild(circle);
+        row.appendChild(text);
+        inner.appendChild(row);
+    });
+    body.appendChild(inner);
+
+    header.addEventListener("click",()=>{
+        dailyToggleExpanded[key]=!dailyToggleExpanded[key];
+        if(dailyToggleExpanded[key]){
+            wrap.classList.add("expanded");
+            body.style.maxHeight=body.scrollHeight+"px";
+            body.addEventListener("transitionend", function h(){
+                if(dailyToggleExpanded[key]) body.style.maxHeight="none";
+                body.removeEventListener("transitionend",h);
+            }, {once:true});
+        }else{
+            body.style.maxHeight=body.scrollHeight+"px";
+            requestAnimationFrame(()=>{
+                wrap.classList.remove("expanded");
+                body.style.maxHeight="0px";
+            });
+        }
+    });
+
+    if(dailyToggleExpanded[key]){
+        body.style.maxHeight="none";
+    }else{
+        body.style.maxHeight="0px";
+    }
+
+    wrap.appendChild(header);
+    wrap.appendChild(body);
+    container.appendChild(wrap);
 }
 
 function save(){
@@ -474,6 +621,7 @@ function render(){
         row.appendChild(text);
         list.appendChild(row);
     });
+    renderDailyToggle(list, TODAY, render);
 }
 
 function toggle(i){
@@ -627,10 +775,7 @@ let dayLastToggled=null;
 const startedDays=new Set();
 
 function ensureDay(key){
-    if(!Array.isArray(allDays[key])){
-        allDays[key]=DEFAULT_TASKS.map(t=>({text:t,done:false}));
-        saveAllDays(allDays);
-    }else if(allDays[key].length===0){
+    if(!Array.isArray(allDays[key]) || allDays[key].length===0){
         allDays[key]=[{text:"",done:false}];
     }
     return allDays[key];
@@ -668,6 +813,7 @@ function renderDayEmptyState(key){
         dayFocusRow(0,0);
     });
     dayItems.appendChild(empty);
+    renderDailyToggle(dayItems, key, ()=>renderDayList(key));
 }
 
 function renderDayList(key, animate){
@@ -751,6 +897,7 @@ function renderDayList(key, animate){
         row.appendChild(text);
         dayItems.appendChild(row);
     });
+    renderDailyToggle(dayItems, key, ()=>renderDayList(key));
 }
 
 function openDay(key,dayNum){
